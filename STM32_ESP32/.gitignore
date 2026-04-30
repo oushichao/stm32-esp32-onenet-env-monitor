@@ -1,0 +1,17 @@
+/build/
+*.elf
+*.bin
+*.hex
+*.map
+
+/.settings/
+/.vscode/
+/.mxproject
+*.launch
+
+Camera/
+Download/
+Movies/
+Music/
+Pictures/
+Screenshots/
