@@ -57,7 +57,7 @@ ESP32 专职网络通信（WiFi + 协议栈），职责分离提升系统稳定�
 | 采集端 MCU | STM32F103 + HAL 库 |
 | 通信端 MCU | ESP32-S3 + ESP-IDF |
 | 实时系统 | FreeRTOS（双端） |
-| MCU 间通信 | UART + 自定义协议帧（CRC 校验） |
+| MCU 间通信 | UART + 自定义协议帧 |
 | 网络协议 | WiFi / TCP / MQTT |
 | 云平台 | OneNET |
 | 显示 | SSD1306 OLED（I²C） |
