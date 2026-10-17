@@ -237,6 +237,9 @@ void Serial_ReceiveData(uint8_t*buf){
         Receive_Tail1,
         Receive_Tail2
     };
+
+    static TickType_t last_rx_tick = 0;
+    const TickType_t rx_timeout_tick = pdMS_TO_TICKS(10); // 超时10ms，可调整
     static enum statu current_statu=Receive_Head1;
     //Rx FIFO 缓冲区中可用的字节数
     ESP_ERROR_CHECK(uart_get_buffered_data_len(MY_UART_NUM, (size_t*)&length));
@@ -244,10 +247,17 @@ void Serial_ReceiveData(uint8_t*buf){
     static uint8_t send_buf[9]={0};        //应答帧
     static uint8_t current_len=0;
     static uint8_t store_data[6]={0};
+
+    TickType_t now_tick = xTaskGetTickCount();
+    if(current_statu != Receive_Head1 && (now_tick - last_rx_tick) > rx_timeout_tick){
+        current_statu = Receive_Head1; // 超时强制回到等待帧头，重同步
+    }
+
     if(length>0){
         uart_read_bytes(MY_UART_NUM,buf,length,100);
     }
     for(int i=0;i<length;i++){
+        last_rx_tick = xTaskGetTickCount();
         switch (current_statu)
         {
         case Receive_Head1:
