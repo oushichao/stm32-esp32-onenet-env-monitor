@@ -35,7 +35,6 @@ SemaphoreHandle_t Serial_TxMutex = NULL;
 EventGroupHandle_t  receive_flag;
 
 
-void Error_Handler();
 //RTS（请求发送） 和 CTS（清除发送）
 
 
