@@ -21,14 +21,19 @@
 #define FRAME_HEAD2      0x55    // 帧头2
 #define FRAME_TAIL1      0xDD    // 帧尾1
 #define FRAME_TAIL2      0xEE    // 帧尾2
-
+#define RX_BUF_LEN       64
+uint8_t Serial_RxBufA[RX_BUF_LEN] = {0};
+uint8_t Serial_RxBufB[RX_BUF_LEN] = {0};
 
 extern bool relay_switch;
 extern float temp_threshold;
 extern float humi_threshold;
 
 UART_HandleTypeDef huart1;
-uint8_t Serial_RxData[31]={0};
+volatile uint8_t *dma_target_buf = Serial_RxBufA;
+// 待任务处理的缓冲区 + 长度
+volatile uint8_t *ready_buf = NULL;
+volatile uint8_t ready_len = 0;
 volatile uint8_t Serial_RxFlag;
 
 SemaphoreHandle_t Serial_TxMutex = NULL;
@@ -76,13 +81,43 @@ void Serial_Init(void)
     }
 
     HAL_NVIC_SetPriority(USART1_IRQn, 5, 0); 
+    
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, dma_target_buf, RX_BUF_LEN);
+    __HAL_LINKDMA(&huart1,hdmarx, hdma_usart1_rx);
     HAL_NVIC_EnableIRQ(USART1_IRQn);    // 使能USART1中断
-
-    HAL_UART_Receive_IT(&huart1, (uint8_t *)&Serial_RxData, 31);
 
     if(Serial_TxMutex == NULL)
     {
         Serial_TxMutex = xSemaphoreCreateMutex();
+    }
+}
+
+/**
+ * @brief  串口接收完成回调函数（中断内调用）
+ * @param  huart 串口句柄
+ * @retval 无
+ */
+uint16_t callback_count=0;
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t size)
+{
+    if (huart->Instance==USART1){
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        ready_buf = dma_target_buf;
+        ready_len = size;
+
+        // 切换DMA目标缓冲区
+        if(dma_target_buf == Serial_RxBufA)
+        {
+            dma_target_buf = Serial_RxBufB;
+        }
+        else
+        {
+            dma_target_buf = Serial_RxBufA;
+        }
+
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart1, dma_target_buf, RX_BUF_LEN);
+        xEventGroupSetBitsFromISR(receive_flag,WAIT_DATA,&xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
     }
 }
 
@@ -257,21 +292,6 @@ void USART1_IRQHandler(void)
     HAL_UART_IRQHandler(&huart1);
 }
 
-/**
- * @brief  串口接收完成回调函数（中断内调用）
- * @param  huart 串口句柄
- * @retval 无
- */
-uint16_t callback_count=0;
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1){
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        xEventGroupSetBitsFromISR(receive_flag,WAIT_DATA,&xHigherPriorityTaskWoken);
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-        HAL_UART_Receive_IT(&huart1, (uint8_t *)&Serial_RxData, 31);       
-    }
-}
 
 
 static uint8_t CheckSum_Calc(uint8_t *data, uint8_t len){
@@ -370,8 +390,7 @@ void Serial_Store_data(uint8_t* store_buf){
 
 
 uint16_t frame_ok_count = 0;
-void Serial_ReceiveData(uint8_t*buf){
-    uint8_t length=31;
+void Serial_ReceiveData(uint8_t*buf,uint8_t size){
     enum statu{
         Receive_Head1,
         Receive_Head2,
@@ -385,7 +404,7 @@ void Serial_ReceiveData(uint8_t*buf){
     static enum statu current_statu=Receive_Head1;
     static uint8_t current_len=0;
     static uint8_t store_data[6]={0};
-    for(int i=0;i<length;i++){
+    for(int i=0;i<size;i++){
         switch (current_statu)
         {
         case Receive_Head1:
@@ -457,4 +476,5 @@ void Serial_ReceiveData(uint8_t*buf){
             break;
         }
     }
+    current_statu=Receive_Head1;
 }

@@ -41,7 +41,10 @@ bool relay_switch=false;
 float temp_threshold=30.0;
 float humi_threshold=70.0;
 extern EventGroupHandle_t  receive_flag;
-extern uint8_t Serial_RxData[31];
+extern volatile uint8_t *ready_buf;
+extern volatile uint8_t ready_len;
+static uint8_t size=0;
+static uint8_t* buf=NULL;
 
 uint16_t lux=0;                         //环境光强度
 float temperature=0.0, humidity=0.0;    //温度，湿度
@@ -67,8 +70,15 @@ void Serial_Receive_Task_Init(void *argument){
                 pdTRUE,
                 pdTRUE,
                 portMAX_DELAY);
-        Serial_ReceiveData(Serial_RxData);
-        Process_Data(relay_switch,temp_threshold,humi_threshold);
+
+        taskENTER_CRITICAL();
+        buf=ready_buf;
+        size=ready_len;
+        taskEXIT_CRITICAL();
+        if(buf&&size>0){
+            Serial_ReceiveData(buf,size);
+            Process_Data(relay_switch,temp_threshold,humi_threshold);
+        }
     }
 }
 

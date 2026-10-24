@@ -27,3 +27,12 @@ SHT30.h
 MY_I2C.c
 MY_I2C.h
 
+# 忽略 ESP32 无用模板文件
+ESP32-S3/include/README
+ESP32-S3/lib/README
+ESP32-S3/test/README
+
+# 忽略 ESP-IDF 自动生成的本地配置文件
+ESP32-S3/sdkconfig
+ESP32-S3/sdkconfig.old
+ESP32-S3/sdkconfig.*

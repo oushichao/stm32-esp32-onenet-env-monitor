@@ -1,0 +1,77 @@
+/build/
+*.elf
+*.bin
+*.hex
+*.map
+
+/.settings/
+/.vscode/
+/.mxproject
+*.launch
+
+Camera/
+Download/
+Movies/
+Music/
+Pictures/
+Screenshots/
+
+# ========== 通用 ==========
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/.cache
+.vscode/extensions.json
+.idea/
+*.iml
+# clangd cache
+.clangd/index/
+.clangd/.cache
+
+# ========== STM32_ESP32 / CMake 工程 ==========
+STM32_ESP32/build/
+STM32_ESP32/CMakeCache.txt
+STM32_ESP32/CMakeFiles/
+STM32_ESP32/cmake_install.cmake
+STM32_ESP32/Makefile
+STM32_ESP32/*.elf
+STM32_ESP32/*.bin
+STM32_ESP32/*.hex
+STM32_ESP32/*.map
+STM32_ESP32/*.o
+STM32_ESP32/*.d
+STM32_ESP32/*.su
+STM32_ESP32/*.lst
+STM32_ESP32/*.siz
+STM32_ESP32/compile_commands.json
+
+# ========== ESP32-S3 PlatformIO 工程 ==========
+ESP32-S3/.pio/
+ESP32-S3/.vscode/.pio
+ESP32-S3/.platformio/
+ESP32-S3/build/
+ESP32-S3/*.bin
+ESP32-S3/*.elf
+ESP32-S3/*.map
+
+# ========== 编译临时文件、日志 ==========
+*.log
+*.tmp
+
+01/Core/
+ESP32-S3-LVGI-IOT/
+lv_port_pc_vscode/
+bundles/
+01/
+lv_port_pc_vscode/
+
+# STM32 HAL/CMSIS 库，不跟踪
+STM32_ESP32/Drivers/
+STM32_ESP32/Middlewares/
+STM32_ESP32/build/
+STM32_ESP32/Debug/
+STM32_ESP32/Release/
+STM32_ESP32/FreeRTOS/
+STM32_ESP32/Drivers/
