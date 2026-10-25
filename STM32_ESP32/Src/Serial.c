@@ -401,9 +401,16 @@ void Serial_ReceiveData(uint8_t*buf,uint8_t size){
         Receive_Tail1,
         Receive_Tail2
     };
+    static TickType_t last_rx_tick = 0;
+    const TickType_t rx_timeout_tick = pdMS_TO_TICKS(10); // 超时10ms，可调整
+
     static enum statu current_statu=Receive_Head1;
     static uint8_t current_len=0;
     static uint8_t store_data[6]={0};
+    TickType_t now_tick = xTaskGetTickCount();
+    if(current_statu != Receive_Head1 && (now_tick - last_rx_tick) > rx_timeout_tick){
+        current_statu = Receive_Head1; // 超时强制回到等待帧头，重同步
+    }
     for(int i=0;i<size;i++){
         switch (current_statu)
         {
@@ -476,5 +483,4 @@ void Serial_ReceiveData(uint8_t*buf,uint8_t size){
             break;
         }
     }
-    current_statu=Receive_Head1;
 }
