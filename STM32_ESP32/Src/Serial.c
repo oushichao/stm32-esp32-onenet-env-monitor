@@ -30,6 +30,7 @@ extern float temp_threshold;
 extern float humi_threshold;
 
 UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_usart1_rx;
 volatile uint8_t *dma_target_buf = Serial_RxBufA;
 // 待任务处理的缓冲区 + 长度
 volatile uint8_t *ready_buf = NULL;
@@ -75,8 +76,19 @@ void Serial_Init(void)
     huart1.Init.Mode =          UART_MODE_TX_RX;        // 收发模式
     huart1.Init.HwFlowCtl =     UART_HWCONTROL_NONE;    // 无硬件流控
     huart1.Init.OverSampling =  UART_OVERSAMPLING_16;   // 16倍过采样，适合115200波特率，误差较小
-    if (HAL_UART_Init(&huart1) != HAL_OK)
-    {
+    if (HAL_UART_Init(&huart1) != HAL_OK){
+        Error_Handler();
+    }
+
+    hdma_usart1_rx.Instance                 = DMA1_Channel4;      
+    hdma_usart1_rx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+    hdma_usart1_rx.Init.PeriphInc           = DMA_PINC_DISABLE;    
+    hdma_usart1_rx.Init.MemInc              = DMA_MINC_ENABLE;     
+    hdma_usart1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE; 
+    hdma_usart1_rx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE; 
+    hdma_usart1_rx.Init.Mode                = DMA_NORMAL;          
+    hdma_usart1_rx.Init.Priority            = DMA_PRIORITY_MEDIUM;
+    if (HAL_DMA_Init(&hdma_usart1_rx) != HAL_OK){
         Error_Handler();
     }
 
